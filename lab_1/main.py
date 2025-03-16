@@ -1,10 +1,15 @@
+# Функция для шифрования и дешифрования текста с использованием XOR-шифра
 def xor_encrypt_decrypt(text, key):
     result = []
     for i in range(len(text)):
+        # Применяем операцию XOR между символами текста и ключа
         result.append(chr(ord(text[i]) ^ ord(key[i % len(key)])))
     return ''.join(result)
 
+
+# Основная функция для выполнения шифрования
 def main():
+    # Исходный текст для шифрования
     input_text = ("ШИФРОВАНИЕ ИНФОРМАЦИИ ИГРАЕТ ВАЖНУЮ РОЛЬ В ОБЕСПЕЧЕНИИ БЕЗОПАСНОСТИ ДАННЫХ В МИРЕ ГДЕ УГРОЗЫ "
                   "КИБЕРБЕЗОПАСНОСТИ СТАНОВЯТСЯ ВСЕ БОЛЕЕ РАЗНООБРАЗНЫМИ ВАЖНО ИСПОЛЬЗОВАТЬ НАДЕЖНЫЕ МЕТОДЫ ЗАЩИТЫ ОДНИМ "
                   "ИЗ ТАКИХ МЕТОДОВ ЯВЛЯЕТСЯ ШИФР ВЕРНАМА КОТОРЫЙ ОСНОВАН НА ОПЕРАЦИИ ИСКЛЮЧАЮЩЕГО ИЛИ XOR ЭТОТ ШИФР "
@@ -16,16 +21,25 @@ def main():
                   "НЕОБХОДИМО ПОМНИТЬ ЧТО ВАЖНОСТЬ ПРАВИЛЬНОГО ХРАНЕНИЯ И ПЕРЕДАЧИ КЛЮЧА НЕ МЕНЕЕ ВАЖНА ЧЕМ САМ ПРОЦЕСС "
                   "ШИФРОВАНИЯ")
 
-    key = "БУДЕМ_ДУМАТЬ_ЧТО_ШИФРОВАНИЕ_ЭТО_КРУТО"
-    encrypted_text = xor_encrypt_decrypt(input_text, key)
-    print(encrypted_text)
+    # Ключ для шифрования
+    key = "ШИФРОВАНИЕ_ЭТО_КРУТО"
 
+    # Проверка длины ключа
+    if len(key) < len(input_text):
+        raise ValueError("Ключ должен быть как минимум такой же длины, как и текст для шифрования!")
+
+    encrypted_text = xor_encrypt_decrypt(input_text, key)
+
+    # Запись в файлы
     with open('original_text.txt', 'w', encoding='utf-8') as f:
         f.write(input_text)
     with open('encrypted_text.txt', 'w', encoding='utf-8') as f:
         f.write(encrypted_text)
     with open('encryption_key.txt', 'w', encoding='utf-8') as f:
         f.write(key)
+
+    print("Шифрование завершено. Файлы сохранены.")
+    print(encrypted_text)
 
 
 if __name__ == "__main__":
