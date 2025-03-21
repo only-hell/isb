@@ -21,3 +21,4 @@ with open("cod7.txt", "r", encoding="utf-8") as file:
 frequencies = frequency_analysis(encrypted_text)
 for char, freq in frequencies:
     print(f"'{char}': {freq:.6f}")
+ 
