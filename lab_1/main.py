@@ -1,46 +1,23 @@
-# Функция для шифрования и дешифрования текста с использованием XOR-шифра
-def xor_encrypt_decrypt(text, key):
-    result = []
-    for i in range(len(text)):
-        # Применяем операцию XOR между символами текста и ключа
-        result.append(chr(ord(text[i]) ^ ord(key[i % len(key)])))
-    return ''.join(result)
+from collections import Counter
 
 
-# Основная функция для выполнения шифрования
-def main():
-    # Исходный текст для шифрования
-    input_text = ("ШИФРОВАНИЕ ИНФОРМАЦИИ ИГРАЕТ ВАЖНУЮ РОЛЬ В ОБЕСПЕЧЕНИИ БЕЗОПАСНОСТИ ДАННЫХ В МИРЕ ГДЕ УГРОЗЫ "
-                  "КИБЕРБЕЗОПАСНОСТИ СТАНОВЯТСЯ ВСЕ БОЛЕЕ РАЗНООБРАЗНЫМИ ВАЖНО ИСПОЛЬЗОВАТЬ НАДЕЖНЫЕ МЕТОДЫ ЗАЩИТЫ ОДНИМ "
-                  "ИЗ ТАКИХ МЕТОДОВ ЯВЛЯЕТСЯ ШИФР ВЕРНАМА КОТОРЫЙ ОСНОВАН НА ОПЕРАЦИИ ИСКЛЮЧАЮЩЕГО ИЛИ XOR ЭТОТ ШИФР "
-                  "ЯВЛЯЕТСЯ СИММЕТРИЧНЫМ ЧТО ОЗНАЧАЕТ ЧТО ДЛЯ ШИФРОВАНИЯ И РАСШИФРОВКИ ИСПОЛЬЗУЕТСЯ ОДИН И ТОТ ЖЕ КЛЮЧ "
-                  "КЛЮЧ ДОЛЖЕН БЫТЬ СЛУЧАЙНЫМ И ТАКОЙ ЖЕ ДЛИНЫ КАК И СООБЩЕНИЕ ЧТО ДЕЛАЕТ ЕГО ОДНИМ ИЗ САМЫХ БЕЗОПАСНЫХ "
-                  "МЕТОДОВ ШИФРОВАНИЯ ЕСЛИ КЛЮЧ ОСТАЕТСЯ СЕКРЕТНЫМ ШИФР ВЕРНАМА ПРИМЕНЯЕТСЯ В КРИПТОГРАФИИ ДЛЯ ЗАЩИТЫ "
-                  "ПЕРЕДАВАЕМЫХ ДАННЫХ А ТАКЖЕ В СИТУАЦИЯХ КОГДА ВАЖНА ВЫСОКАЯ СТЕПЕНЬ КОНФИДЕНЦИАЛЬНОСТИ НЕСМОТРЯ НА СВОЮ "
-                  "ПРОСТОТУ ЭТОТ МЕТОД ОБЕСПЕЧИВАЕТ ВЫСОКУЮ СТЕПЕНЬ ЗАЩИТЫ ПРИ ПРАВИЛЬНОМ ИСПОЛЬЗОВАНИИ КЛЮЧА ПРИ ЭТОМ "
-                  "НЕОБХОДИМО ПОМНИТЬ ЧТО ВАЖНОСТЬ ПРАВИЛЬНОГО ХРАНЕНИЯ И ПЕРЕДАЧИ КЛЮЧА НЕ МЕНЕЕ ВАЖНА ЧЕМ САМ ПРОЦЕСС "
-                  "ШИФРОВАНИЯ")
+def frequency_analysis(text):
+    # Исключаем символы перехода на новую строку
+    text = text.replace("\n", "")
 
-    # Ключ для шифрования
-    key = "ШИФРОВАНИЕ_ЭТО_КРУТО"
+    # Подсчет количества вхождений каждого символа
+    total_chars = len(text)
+    freq_dict = Counter(text)
 
-    # Проверка длины ключа
-    if len(key) < len(input_text):
-        raise ValueError("Ключ должен быть как минимум такой же длины, как и текст для шифрования!")
+    freq_analysis = {char: count / total_chars for char, count in freq_dict.items()}
+    sorted_freq = sorted(freq_analysis.items(), key=lambda x: x[1], reverse=True)
 
-    encrypted_text = xor_encrypt_decrypt(input_text, key)
-
-    # Запись в файлы
-    with open('original_text.txt', 'w', encoding='utf-8') as f:
-        f.write(input_text)
-    with open('encrypted_text.txt', 'w', encoding='utf-8') as f:
-        f.write(encrypted_text)
-    with open('encryption_key.txt', 'w', encoding='utf-8') as f:
-        f.write(key)
-
-    print("Шифрование завершено. Файлы сохранены.")
-    print(encrypted_text)
+    return sorted_freq
 
 
-if __name__ == "__main__":
-    main()
+with open("cod7.txt", "r", encoding="utf-8") as file:
+    encrypted_text = file.read()
+
+frequencies = frequency_analysis(encrypted_text)
+for char, freq in frequencies:
+    print(f"'{char}': {freq:.6f}")
