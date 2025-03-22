@@ -24,10 +24,6 @@ def main():
     # Ключ для шифрования
     key = "ШИФРОВАНИЕ_ЭТО_КРУТО"
 
-    # Проверка длины ключа
-    if len(key) < len(input_text):
-        raise ValueError("Ключ должен быть как минимум такой же длины, как и текст для шифрования!")
-
     encrypted_text = xor_encrypt_decrypt(input_text, key)
     print(encrypted_text)
     # Запись в файлы
