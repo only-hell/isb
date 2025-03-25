@@ -1,4 +1,5 @@
 import random
+import config
 
 
 def generate_random_key(length):
@@ -8,38 +9,25 @@ def generate_random_key(length):
 
 
 def xor_encrypt_decrypt(text, key):
-    # функция шифровки xor
+    # функция шифровки XOR
     return ''.join(chr(ord(text[i]) ^ ord(key[i])) for i in range(len(text)))
 
 
-# Исходный текст
-INPUT_TEXT = ("ШИФРОВАНИЕ ИНФОРМАЦИИ ИГРАЕТ ВАЖНУЮ РОЛЬ В ОБЕСПЕЧЕНИИ БЕЗОПАСНОСТИ ДАННЫХ В МИРЕ ГДЕ УГРОЗЫ "
-              "КИБЕРБЕЗОПАСНОСТИ СТАНОВЯТСЯ ВСЕ БОЛЕЕ РАЗНООБРАЗНЫМИ ВАЖНО ИСПОЛЬЗОВАТЬ НАДЕЖНЫЕ МЕТОДЫ ЗАЩИТЫ ОДНИМ "
-              "ИЗ ТАКИХ МЕТОДОВ ЯВЛЯЕТСЯ ШИФР ВЕРНАМА КОТОРЫЙ ОСНОВАН НА ОПЕРАЦИИ ИСКЛЮЧАЮЩЕГО ИЛИ XOR ЭТОТ ШИФР "
-              "ЯВЛЯЕТСЯ СИММЕТРИЧНЫМ ЧТО ОЗНАЧАЕТ ЧТО ДЛЯ ШИФРОВАНИЯ И РАСШИФРОВКИ ИСПОЛЬЗУЕТСЯ ОДИН И ТОТ ЖЕ КЛЮЧ "
-              "КЛЮЧ ДОЛЖЕН БЫТЬ СЛУЧАЙНЫМ И ТАКОЙ ЖЕ ДЛИНЫ КАК И СООБЩЕНИЕ ЧТО ДЕЛАЕТ ЕГО ОДНИМ ИЗ САМЫХ БЕЗОПАСНЫХ "
-              "МЕТОДОВ ШИФРОВАНИЯ ЕСЛИ КЛЮЧ ОСТАЕТСЯ СЕКРЕТНЫМ ШИФР ВЕРНАМА ПРИМЕНЯЕТСЯ В КРИПТОГРАФИИ ДЛЯ ЗАЩИТЫ "
-              "ПЕРЕДАВАЕМЫХ ДАННЫХ А ТАКЖЕ В СИТУАЦИЯХ КОГДА ВАЖНА ВЫСОКАЯ СТЕПЕНЬ КОНФИДЕНЦИАЛЬНОСТИ НЕСМОТРЯ НА СВОЮ "
-              "ПРОСТОТУ ЭТОТ МЕТОД ОБЕСПЕЧИВАЕТ ВЫСОКУЮ СТЕПЕНЬ ЗАЩИТЫ ПРИ ПРАВИЛЬНОМ ИСПОЛЬЗОВАНИИ КЛЮЧА ПРИ ЭТОМ "
-              "НЕОБХОДИМО ПОМНИТЬ ЧТО ВАЖНОСТЬ ПРАВИЛЬНОГО ХРАНЕНИЯ И ПЕРЕДАЧИ КЛЮЧА НЕ МЕНЕЕ ВАЖНА ЧЕМ САМ ПРОЦЕСС "
-              "ШИФРОВАНИЯ")
-
-KEY = generate_random_key(len(INPUT_TEXT))
+key = generate_random_key(len(config.INPUT_TEXT))
 
 
 def main():
-    encrypted_text = xor_encrypt_decrypt(INPUT_TEXT, KEY)
+    encrypted_text = xor_encrypt_decrypt(config.INPUT_TEXT, key)
 
-    # Сохранение файлов
-    with open('original_text.txt', 'w', encoding='utf-8') as f:
-        f.write(INPUT_TEXT)
-    with open('encrypted_text.txt', 'w', encoding='utf-8') as f:
+    # запись результатов в файлы
+    with open(config.ORIGINAL_TEXT_FILE, 'w', encoding='utf-8') as f:
+        f.write(config.INPUT_TEXT)
+    with open(config.ENCRYPTED_TEXT_FILE, 'w', encoding='utf-8') as f:
         f.write(encrypted_text)
-    with open('encryption_key.txt', 'w', encoding='utf-8') as f:
-        f.write(KEY)
+    with open(config.ENCRYPTION_KEY_FILE, 'w', encoding='utf-8') as f:
+        f.write(key)
 
-    print("Шифрование успешно завершено. Файлы сохранены.\n")
-    print(encrypted_text)
+    print("Зашифрованный текст: \n\n", encrypted_text)
 
 
 if __name__ == "__main__":
