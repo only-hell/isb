@@ -6,10 +6,10 @@ import sys
 def generate_random_key(length):
     # Функция генерации случайного ключа
     try:
-        alphabet = "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ "
+
         if length <= 0:
             raise ValueError("Длина ключа должна быть положительным числом")
-        return ''.join(random.choice(alphabet) for _ in range(length))
+        return ''.join(random.choice(config.ALPHABET) for _ in range(length))
     except Exception as e:
         print(f"Ошибка при генерации ключа: {e}")
         sys.exit(1)
