@@ -1,5 +1,3 @@
-# config.py
-
 # Пути к файлам
 ENCODED_FILE = "cod7.txt"
 DECODED_FILE = "decoded_text.txt"
