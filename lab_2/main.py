@@ -75,25 +75,39 @@ def write_results_to_file(filename, results):
             file.write(result + "\n")
 
 
+def compare_sequences(sequences, sequence_names):
+    # Сравнение последовательностей и запись результатов в файл
+    results = ["Результаты NIST тестов для 128-битных последовательностей:\n"]
+
+    for sequence_name, sequence in zip(sequence_names, sequences):
+        results.append(f"\nРезультаты для {sequence_name}:")
+
+        results.append("1. Частотный побитовый тест:")
+        freq_p = frequency_test(sequence)
+        results.append(f"P-value: {freq_p:.6f} => {'Прошел' if freq_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
+
+        results.append("2. Тест на одинаковые подряд идущие биты:")
+        runs_p = runs_test(sequence)
+        results.append(f"P-value: {runs_p:.6f} => {'Прошел' if runs_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
+
+        results.append("3. Тест на самую длинную последовательность единиц в блоке:")
+        longest_run_hist, run_p = longest_run_ones_test(sequence)
+        results.append("Категории (<=1, 2, 3, >=4): " + str(longest_run_hist))
+        results.append(f"P-value: {run_p:.6f} => {'Прошел' if run_p >= P_VALUE_THRESHOLD else 'Не прошел'}")
+
+    # Запись результатов в файл
+    write_results_to_file("test_results_comparison.txt", results)
+    print("Результаты тестирования сохранены в файл test_results_comparison.txt")
+
+
 def main():
     # Основная функция для выполнения всех тестов
-    bits = read_sequence()
+    sequence_py = read_sequence("sequence_py.txt")
+    sequence_java = read_sequence("sequence_java.txt")
+    sequence_cplusplus = read_sequence("sequence_c++.txt")
 
-    results = ["Результаты NIST тестов для 128-битной последовательности:\n", "1. Частотный побитовый тест:"]
-    freq_p = frequency_test(bits)
-    results.append(f"P-value: {freq_p:.6f} => {'Прошел' if freq_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
-
-    results.append("2. Тест на одинаковые подряд идущие биты:")
-    runs_p = runs_test(bits)
-    results.append(f"P-value: {runs_p:.6f} => {'Прошел' if runs_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
-
-    results.append("3. Тест на самую длинную последовательность единиц в блоке:")
-    longest_run_hist, run_p = longest_run_ones_test(bits)
-    results.append("Категории (<=1, 2, 3, >=4): " + str(longest_run_hist))
-    results.append(f"P-value: {run_p:.6f} => {'Прошел' if run_p >= P_VALUE_THRESHOLD else 'Не прошел'}")
-
-    write_results_to_file("test_results.txt", results)
-    print("Результаты тестирования сохранены в файл test_results.txt")
+    # Сравнение всех последовательностей
+    compare_sequences([sequence_py, sequence_java, sequence_cplusplus], ["Python", "Java", "C++"])
 
 
 if __name__ == "__main__":
