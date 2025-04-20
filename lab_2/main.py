@@ -58,23 +58,33 @@ def longest_run_ones_test(bits, block_size=BLOCK_SIZE):
     return freq  # нужно подставить в онлайн-калькулятор
 
 
+def write_results_to_file(filename, results):
+    """Запись результатов тестирования в файл"""
+    with open(filename, "w") as file:
+        for result in results:
+            file.write(result + "\n")
+
+
 def main():
     """Основная функция для выполнения всех тестов"""
     bits = read_sequence()
 
-    print("Результаты NIST тестов для 128-битной последовательности:\n")
+    results = ["Результаты NIST тестов для 128-битной последовательности:\n", "1. Частотный побитовый тест:"]
 
-    print("1. Частотный побитовый тест:")
     freq_p = frequency_test(bits)
-    print(f"P-value: {freq_p:.6f} => {'Прошел' if freq_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
+    results.append(f"P-value: {freq_p:.6f} => {'Прошел' if freq_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
 
-    print("2. Тест на одинаковые подряд идущие биты:")
+    results.append("2. Тест на одинаковые подряд идущие биты:")
     runs_p = runs_test(bits)
-    print(f"P-value: {runs_p:.6f} => {'Прошел' if runs_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
+    results.append(f"P-value: {runs_p:.6f} => {'Прошел' if runs_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
 
-    print("3. Тест на самую длинную последовательность единиц в блоке:")
+    results.append("3. Тест на самую длинную последовательность единиц в блоке:")
     longest_run_hist = longest_run_ones_test(bits)
-    print("Категории (<=1, 2, 3, >=4):", longest_run_hist)
+    results.append("Категории (<=1, 2, 3, >=4): " + str(longest_run_hist))
+
+    # Запись результатов в файл
+    write_results_to_file("test_results.txt", results)
+    print("Результаты тестирования сохранены в файл test_results.txt")
 
 
 if __name__ == "__main__":
