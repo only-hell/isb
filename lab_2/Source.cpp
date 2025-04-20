@@ -7,7 +7,7 @@ int main() {
     std::setlocale(LC_ALL, "");
 
     const int sequence_length = 128;  
-    const std::string output_path = "C:/Users/user/Desktop/oib lab2/pythonProject/lab2/sequence.txt";  
+    const std::string output_path = "C:/Users/user/Desktop/oib lab2/pythonProject/lab2/sequence_c++.txt";  
 
     // Открытие файла для записи
     std::ofstream output_file(output_path);
