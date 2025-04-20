@@ -1,10 +1,11 @@
 import math
 import os
-from config import BLOCK_SIZE, P_VALUE_THRESHOLD
+from config import BLOCK_SIZE, P_VALUE_THRESHOLD, THEORETICAL_PROBS
+from scipy.special import gammaincc
 
 
 def read_sequence(filename="sequence.txt"):
-    """Чтение последовательности из файла"""
+    # Чтение последовательности из файла
     if not os.path.exists(filename):
         raise FileNotFoundError(f"Файл {filename} не найден. Убедитесь, что он лежит рядом с main.py.")
     with open(filename, "r") as file:
@@ -12,7 +13,7 @@ def read_sequence(filename="sequence.txt"):
 
 
 def frequency_test(bits):
-    """Частотный побитовый тест (Frequency test)"""
+    # Частотный побитовый тест (Frequency test)
     n = len(bits)
     s = sum(1 if bit == '1' else -1 for bit in bits)
     s_obs = abs(s) / math.sqrt(n)
@@ -21,21 +22,21 @@ def frequency_test(bits):
 
 
 def runs_test(bits):
-    """Тест на одинаковые подряд идущие биты (Runs test)"""
+    # Тест на одинаковые подряд идущие биты (Runs test)
     n = len(bits)
     pi = bits.count('1') / n
     if abs(pi - 0.5) > (2 / math.sqrt(n)):
-        return 0.0  # автоматически не проходит тест
-    Vn_obs = 1
+        return 0.0
+    vn_obs = 1
     for i in range(1, n):
         if bits[i] != bits[i - 1]:
-            Vn_obs += 1
-    p_value = math.erfc(abs(Vn_obs - 2 * n * pi * (1 - pi)) / (2 * math.sqrt(2 * n) * pi * (1 - pi)))
+            vn_obs += 1
+    p_value = math.erfc(abs(vn_obs - 2 * n * pi * (1 - pi)) / (2 * math.sqrt(2 * n) * pi * (1 - pi)))
     return p_value
 
 
 def longest_run_ones_test(bits, block_size=BLOCK_SIZE):
-    """Тест на самую длинную последовательность единиц в блоке (Longest run of ones)"""
+    # Тест на самую длинную последовательность единиц в блоке (Longest run of ones)
     n = len(bits)
     if n < block_size:
         raise ValueError("Последовательность слишком короткая для данного размера блока.")
@@ -55,22 +56,30 @@ def longest_run_ones_test(bits, block_size=BLOCK_SIZE):
         else:
             freq[3] += 1
 
-    return freq  # нужно подставить в онлайн-калькулятор
+    # Расчёт хи-квадрат и P-value
+    chi_squared = 0.0
+    for i in range(4):
+        expected = num_blocks * THEORETICAL_PROBS[i]
+        chi_squared += (freq[i] - expected) ** 2 / expected
+
+    degrees_of_freedom = 3
+    p_value = gammaincc(degrees_of_freedom / 2.0, chi_squared / 2.0)
+
+    return freq, p_value
 
 
 def write_results_to_file(filename, results):
-    """Запись результатов тестирования в файл"""
-    with open(filename, "w") as file:
+    # Запись результатов тестирования в файл
+    with open(filename, "w", encoding="utf-8") as file:
         for result in results:
             file.write(result + "\n")
 
 
 def main():
-    """Основная функция для выполнения всех тестов"""
+    # Основная функция для выполнения всех тестов
     bits = read_sequence()
 
     results = ["Результаты NIST тестов для 128-битной последовательности:\n", "1. Частотный побитовый тест:"]
-
     freq_p = frequency_test(bits)
     results.append(f"P-value: {freq_p:.6f} => {'Прошел' if freq_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
 
@@ -79,10 +88,10 @@ def main():
     results.append(f"P-value: {runs_p:.6f} => {'Прошел' if runs_p >= P_VALUE_THRESHOLD else 'Не прошел'}\n")
 
     results.append("3. Тест на самую длинную последовательность единиц в блоке:")
-    longest_run_hist = longest_run_ones_test(bits)
+    longest_run_hist, run_p = longest_run_ones_test(bits)
     results.append("Категории (<=1, 2, 3, >=4): " + str(longest_run_hist))
+    results.append(f"P-value: {run_p:.6f} => {'Прошел' if run_p >= P_VALUE_THRESHOLD else 'Не прошел'}")
 
-    # Запись результатов в файл
     write_results_to_file("test_results.txt", results)
     print("Результаты тестирования сохранены в файл test_results.txt")
 
