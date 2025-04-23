@@ -25,13 +25,22 @@ def runs_test(bits):
     # Тест на одинаковые подряд идущие биты (Runs test)
     n = len(bits)
     pi = bits.count('1') / n
-    if abs(pi - 0.5) > (2 / math.sqrt(n)):
+
+    # Проверка: все биты одинаковые — не имеет смысла считать переходы
+    if pi == 0 or pi == 1:
         return 0.0
-    vn_obs = 1
-    for i in range(1, n):
-        if bits[i] != bits[i - 1]:
-            vn_obs += 1
-    p_value = math.erfc(abs(vn_obs - 2 * n * pi * (1 - pi)) / (2 * math.sqrt(2 * n) * pi * (1 - pi)))
+
+    # Подсчет числа переходов (0→1 или 1→0)
+    v_n = sum(1 for i in range(1, n) if bits[i] != bits[i - 1]) + 1
+
+    # Вычисление ожидаемого значения и дисперсии
+    expected_vn = 2 * n * pi * (1 - pi)
+    std_dev = 2 * math.sqrt(2 * n) * pi * (1 - pi)
+
+    if std_dev == 0:
+        return 0.0
+
+    p_value = math.erfc(abs(v_n - expected_vn) / std_dev)
     return p_value
 
 
