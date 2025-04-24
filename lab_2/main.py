@@ -24,23 +24,25 @@ def frequency_test(bits):
 def runs_test(bits):
     # Тест на одинаковые подряд идущие биты (Runs test)
     n = len(bits)
+    if n == 0:
+        return 0.0
     pi = bits.count('1') / n
-
-    # Проверка: все биты одинаковые — не имеет смысла считать переходы
-    if pi == 0 or pi == 1:
+    threshold = 2.0 / math.sqrt(n)
+    if abs(pi - 0.5) >= threshold:
         return 0.0
-
-    # Подсчет числа переходов (0→1 или 1→0)
-    v_n = sum(1 for i in range(1, n) if bits[i] != bits[i - 1]) + 1
-
-    # Вычисление ожидаемого значения и дисперсии
-    expected_vn = 2 * n * pi * (1 - pi)
-    std_dev = 2 * math.sqrt(2 * n) * pi * (1 - pi)
-
-    if std_dev == 0:
+    vn_obs = 1
+    for i in range(1, n):
+        if bits[i] != bits[i - 1]:
+            vn_obs += 1
+    expected_runs = 2.0 * n * pi * (1.0 - pi)
+    variance_for_sqrt = 2.0 * n * pi * (1.0 - pi)
+    if variance_for_sqrt <= 0:
         return 0.0
-
-    p_value = math.erfc(abs(v_n - expected_vn) / std_dev)
+    denominator = 2.0 * math.sqrt(variance_for_sqrt)
+    if denominator == 0:
+        return 0.0
+    arg = abs(vn_obs - expected_runs) / denominator
+    p_value = math.erfc(arg)
     return p_value
 
 
