@@ -30,7 +30,7 @@ def runs_test(bits):
     threshold = 2.0 / math.sqrt(n)
     if abs(pi - 0.5) >= threshold:
         return 0.0
-    vn_obs = 1
+    vn_obs = 0
     for i in range(1, n):
         if bits[i] != bits[i - 1]:
             vn_obs += 1
