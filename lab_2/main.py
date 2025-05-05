@@ -36,6 +36,7 @@ def runs_test(bits):
             vn_obs += 1
     expected_runs = 2.0 * n * pi * (1.0 - pi)
     variance_for_sqrt = 2.0 * n * pi * (1.0 - pi)
+    variance_for_sqrt = 2.0 * sqrt(2.0 * n) * pi * (1.0 - pi) 
     if variance_for_sqrt <= 0:
         return 0.0
     denominator = 2.0 * math.sqrt(variance_for_sqrt)
