@@ -21,30 +21,28 @@ def frequency_test(bits):
     return p_value
 
 
-def runs_test(bits):
+def runs_test(sequence):
     # Тест на одинаковые подряд идущие биты (Runs test)
-    n = len(bits)
-    if n == 0:
+    n = len(sequence)
+    ones = sequence.count('1')
+    prop = ones / n
+
+    # Предусловие на долю единиц
+    if abs(prop - 0.5) >= 2 / math.sqrt(n):
         return 0.0
-    pi = bits.count('1') / n
-    threshold = 2.0 / math.sqrt(n)
-    if abs(pi - 0.5) >= threshold:
-        return 0.0
-    vn_obs = 0
+
+    # Подсчет переходов (знакоперемен)
+    runs = 1
     for i in range(1, n):
-        if bits[i] != bits[i - 1]:
-            vn_obs += 1
-    expected_runs = 2.0 * n * pi * (1.0 - pi)
-    variance_for_sqrt = 2.0 * n * pi * (1.0 - pi)
-    variance_for_sqrt = 2.0 * sqrt(2.0 * n) * pi * (1.0 - pi) 
-    if variance_for_sqrt <= 0:
-        return 0.0
-    denominator = 2.0 * math.sqrt(variance_for_sqrt)
-    if denominator == 0:
-        return 0.0
-    arg = abs(vn_obs - expected_runs) / denominator
-    p_value = math.erfc(arg)
+        if sequence[i] != sequence[i - 1]:
+            runs += 1
+
+    # Расчет P-value по стандартной формуле
+    numerator = abs(runs - 2 * n * prop * (1 - prop))
+    denominator = 2 * math.sqrt(2 * n) * prop * (1 - prop)
+    p_value = math.erfc(numerator / denominator)
     return p_value
+
 
 
 def longest_run_ones_test(bits, block_size=BLOCK_SIZE):
