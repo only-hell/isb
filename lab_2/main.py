@@ -32,9 +32,9 @@ def runs_test(sequence):
         return 0.0
 
     # Подсчет переходов (знакоперемен)
-    runs = 1
-    for i in range(1, n):
-        if sequence[i] != sequence[i - 1]:
+    runs = 0
+    for i in range(0, n-1):
+        if sequence[i] != sequence[i + 1]:
             runs += 1
 
     # Расчет P-value по стандартной формуле
