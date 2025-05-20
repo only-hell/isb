@@ -1,7 +1,7 @@
 import math
 import os
 from config import BLOCK_SIZE, P_VALUE_THRESHOLD, THEORETICAL_PROBS
-from scipy.special import gammaincc
+from scipy.special import gammainc
 
 
 def read_sequence(filename="sequence.txt"):
@@ -22,27 +22,22 @@ def frequency_test(bits):
 
 
 def runs_test(sequence):
-    # Тест на одинаковые подряд идущие биты (Runs test)
     n = len(sequence)
     ones = sequence.count('1')
     prop = ones / n
-
-    # Предусловие на долю единиц
     if abs(prop - 0.5) >= 2 / math.sqrt(n):
         return 0.0
-
-    # Подсчет переходов (знакоперемен)
-    runs = 0
-    for i in range(0, n-1):
-        if sequence[i] != sequence[i + 1]:
+    runs = 1
+    for i in range(1, n):
+        if sequence[i] != sequence[i - 1]:
             runs += 1
-
-    # Расчет P-value по стандартной формуле
-    numerator = abs(runs - 2 * n * prop * (1 - prop))
+    expected_runs = 2 * n * prop * (1 - prop) + 1
     denominator = 2 * math.sqrt(2 * n) * prop * (1 - prop)
-    p_value = math.erfc(numerator / denominator)
+    if denominator == 0:
+        return 0.0
+    z_score_arg = abs(runs - expected_runs) / denominator
+    p_value = math.erfc(z_score_arg)
     return p_value
-
 
 
 def longest_run_ones_test(bits, block_size=BLOCK_SIZE):
@@ -73,7 +68,7 @@ def longest_run_ones_test(bits, block_size=BLOCK_SIZE):
         chi_squared += (freq[i] - expected) ** 2 / expected
 
     degrees_of_freedom = 3
-    p_value = gammaincc(degrees_of_freedom / 2.0, chi_squared / 2.0)
+    p_value = gammainc(degrees_of_freedom / 2.0, chi_squared / 2.0)
 
     return freq, p_value
 
