@@ -1,80 +1,52 @@
-# decrypt.py
+from asymmetric_encryption import AsymmetricCipher
+from symmetric_encryption import SymmetricCipher
+from file_manager import FileManager
+from utils import Utils
 
-from crypto_utils import load_private_key, decrypt_symmetric_key, unpad_data, save_file, read_file, SM4_BLOCK_SIZE
-from gmssl.sm4 import CryptSM4, SM4_DECRYPT
-import os  # Импорт os не нужен, убран
 
-
-def hybrid_decrypt(settings):
+def hybrid_decrypt(settings: dict):
     """Выполняет гибридное дешифрование файла."""
-    print("\n===== Режим: Дешифрование данных =====")
+    Utils.print_status("\n===== Режим: Дешифрование данных =====")
 
-    # Пути для чтения/записи из настроек
-    encrypted_file_path = settings.get('encrypted_file')
-    private_key_path = settings.get('secret_key')
-    # Используем новое имя ключа для зашифрованного симметричного ключа
-    encrypted_sym_key_path = settings.get('encrypted_symmetric_key_file')
-    if not encrypted_sym_key_path:
-        # Или старое имя ключа, если не переименовывали в JSON
-        encrypted_sym_key_path = settings.get('symmetric_key')
-    decrypted_file_path = settings.get('decrypted_file')
-
-    # Проверка наличия необходимых файлов
-    if not all([encrypted_file_path, private_key_path, encrypted_sym_key_path, decrypted_file_path]):
-        print("[!] Ошибка: Не указаны все необходимые пути в настройках для дешифрования.")
-        exit(1)
-    if not os.path.exists(encrypted_file_path):
-        print(f"[!] Ошибка: Зашифрованный файл не найден по пути {encrypted_file_path}")
-        exit(1)
-    if not os.path.exists(private_key_path):
-        print(f"[!] Ошибка: Файл приватного ключа не найден по пути {private_key_path}")
-        exit(1)
-    if not os.path.exists(encrypted_sym_key_path):
-        print(f"[!] Ошибка: Файл зашифрованного симметричного ключа не найден по пути {encrypted_sym_key_path}")
-        exit(1)
-
-    # 3.1. Расшифровать симметричный ключ.
-    private_key = load_private_key(private_key_path)
-    encrypted_sym_key_data = read_file(encrypted_sym_key_path)
-    sym_key = decrypt_symmetric_key(private_key, encrypted_sym_key_data)
-
-    # 3.2. Расшифровать текст симметричным алгоритмом и сохранить по указанному пути.
-    print(f"[*] Чтение зашифрованного файла {encrypted_file_path}...")
-    encrypted_data = read_file(encrypted_file_path)
-
-    # Извлекаем IV (первые 16 байт) и шифротекст
-    if len(encrypted_data) < SM4_BLOCK_SIZE:
-        print("[!] Ошибка: Зашифрованный файл слишком короткий (меньше размера блока IV).")
-        exit(1)
-    iv = encrypted_data[:SM4_BLOCK_SIZE]
-    ciphertext = encrypted_data[SM4_BLOCK_SIZE:]
-    print(f"[+] Извлечен IV: {iv.hex()}")
-    print(f"[*] Размер шифротекста: {len(ciphertext)} байт.")
-
-    # Шифротекст должен быть кратен размеру блока для CBC режима перед анпаддингом
-    if len(ciphertext) % SM4_BLOCK_SIZE != 0:
-        print(
-            f"[!] Ошибка: Размер шифротекста ({len(ciphertext)}) не кратен размеру блока SM4 ({SM4_BLOCK_SIZE}). Возможно, файл поврежден.")
-        exit(1)
-
-    print("[*] Инициализация дешифратора SM4 в режиме CBC...")
-    cipher = CryptSM4()
-    cipher.set_key(sym_key, SM4_DECRYPT)
-
-    print("[*] Дешифрование данных симметричным алгоритмом SM4...")
-    # Примечание: gmssl.sm4.CryptSM4.crypt_cbc дешифрует данные целиком
-    padded_plain = cipher.crypt_cbc(iv, ciphertext)
-    print("[+] Данные дешифрованы.")
-
-    print("[*] Удаление паддинга из дешифрованных данных...")
     try:
-        plain = unpad_data(padded_plain)
-        print("[+] Паддинг успешно удален.")
-    except ValueError as e:
-        print(f"[!] Ошибка при удалении паддинга. Данные, возможно, повреждены или ключ неверен: {e}")
-        exit(1)
+        # Получение путей из настроек
+        encrypted_file_path = settings.get('encrypted_file')
+        private_key_path = settings.get('secret_key')
+        encrypted_sym_key_path = settings.get('encrypted_symmetric_key_file')
+        decrypted_file_path = settings.get('decrypted_file')
 
-    print(f"[*] Сохранение расшифрованных данных в {decrypted_file_path}...")
-    save_file(decrypted_file_path, plain)
+        # Проверка наличия всех путей
+        if not all([encrypted_file_path, private_key_path, encrypted_sym_key_path, decrypted_file_path]):
+            Utils.print_error("Не указаны все необходимые пути в настройках для дешифрования.")
+            return
 
-    print("===== Дешифрование завершено успешно! =====")
+        # Проверка существования входных файлов
+        if not FileManager.read_file(encrypted_file_path): return
+        if not FileManager.read_file(private_key_path): return
+        if not FileManager.read_file(encrypted_sym_key_path): return
+
+        # Расшифровка симметричного ключа с помощью приватного RSA ключа
+        encrypted_sym_key_data = FileManager.read_file(encrypted_sym_key_path)
+        if not encrypted_sym_key_data: return
+
+        private_key = AsymmetricCipher.load_private_key(private_key_path)
+        if not private_key: return
+
+        sym_key = AsymmetricCipher.decrypt_sym_key(private_key, encrypted_sym_key_data)
+        if not sym_key: return
+
+        # Дешифровка файла симметричным ключом SM4 (CBC)
+        encrypted_data_with_iv = FileManager.read_file(encrypted_file_path)
+        if not encrypted_data_with_iv: return
+
+        plain_data = SymmetricCipher.decrypt(sym_key, encrypted_data_with_iv)
+        if plain_data is None: return
+
+        # Сохранение расшифрованных данных
+        FileManager.save_file(decrypted_file_path, plain_data)
+
+        Utils.print_success("===== Дешифрование завершено успешно! =====")
+
+    except Exception as e:
+        # Перехвачены ошибки из File/Crypto методов (которые уже вывели детальное сообщение)
+        Utils.print_error(f"Произошла ошибка в процессе дешифрования: {e}")

@@ -1,8 +1,8 @@
 {
-  "initial_file": "initial.txt",
-  "encrypted_file": "encrypted.txt",
-  "decrypted_file": "decrypted.txt",
-  "encrypted_symmetric_key_file": "encrypted_symmetric_key.bin",
-  "public_key": "public_key.pem",
-  "secret_key": "private_key.pem"
+  "initial_file": "files/test_input.txt",
+  "encrypted_file": "files/test_input.encrypted",
+  "decrypted_file": "files/test_input.decrypted",
+  "encrypted_symmetric_key_file": "keys/encrypted_symmetric_key.bin",
+  "public_key": "keys/public_key.pem",
+  "secret_key": "keys/private_key.pem"
 }

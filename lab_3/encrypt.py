@@ -1,69 +1,52 @@
-# encrypt.py
+from asymmetric_encryption import AsymmetricCipher
+from symmetric_encryption import SymmetricCipher
+from file_manager import FileManager
+from utils import Utils
 
-from crypto_utils import load_private_key, decrypt_symmetric_key, pad_data, save_file, read_file, SM4_BLOCK_SIZE
-from gmssl.sm4 import CryptSM4, SM4_ENCRYPT
-import os
 
-
-def hybrid_encrypt(settings):
+def hybrid_encrypt(settings: dict):
     """Выполняет гибридное шифрование файла."""
-    print("\n===== Режим: Шифрование данных =====")
+    Utils.print_status("\n===== Режим: Шифрование данных =====")
 
-    # Пути для чтения/записи из настроек
-    initial_file_path = settings.get('initial_file')
-    private_key_path = settings.get('secret_key')
-    # Используем новое имя ключа для зашифрованного симметричного ключа
-    encrypted_sym_key_path = settings.get('encrypted_symmetric_key_file')
-    if not encrypted_sym_key_path:
-        # Или старое имя ключа, если не переименовывали в JSON
-        encrypted_sym_key_path = settings.get('symmetric_key')
+    try:
+        # Получение путей из настроек
+        initial_file_path = settings.get('initial_file')
+        private_key_path = settings.get('secret_key')
+        encrypted_sym_key_path = settings.get('encrypted_symmetric_key_file')
+        encrypted_file_path = settings.get('encrypted_file')
 
-    encrypted_file_path = settings.get('encrypted_file')
+        # Проверка наличия всех путей
+        if not all([initial_file_path, private_key_path, encrypted_sym_key_path, encrypted_file_path]):
+            Utils.print_error("Не указаны все необходимые пути в настройках для шифрования.")
+            return
 
-    # Проверка наличия необходимых файлов
-    if not all([initial_file_path, private_key_path, encrypted_sym_key_path, encrypted_file_path]):
-        print("[!] Ошибка: Не указаны все необходимые пути в настройках для шифрования.")
-        exit(1)
-    if not os.path.exists(initial_file_path):
-        print(f"[!] Ошибка: Исходный файл не найден по пути {initial_file_path}")
-        exit(1)
-    if not os.path.exists(private_key_path):
-        print(f"[!] Ошибка: Файл приватного ключа не найден по пути {private_key_path}")
-        exit(1)
-    if not os.path.exists(encrypted_sym_key_path):
-        print(f"[!] Ошибка: Файл зашифрованного симметричного ключа не найден по пути {encrypted_sym_key_path}")
-        exit(1)
+        # Проверка существования входных файлов
+        if not FileManager.read_file(initial_file_path): return
+        if not FileManager.read_file(private_key_path): return
+        if not FileManager.read_file(encrypted_sym_key_path): return
 
-    # 2.1. Расшифровать симметричный ключ.
-    private_key = load_private_key(private_key_path)
-    encrypted_sym_key_data = read_file(encrypted_sym_key_path)
-    sym_key = decrypt_symmetric_key(private_key, encrypted_sym_key_data)
+        # Расшифровка симметричного ключа с помощью приватного RSA ключа
+        encrypted_sym_key_data = FileManager.read_file(encrypted_sym_key_path)
+        if not encrypted_sym_key_data: return
 
-    # 2.2. Зашифровать текст симметричным алгоритмом и сохранить по указанному пути.
-    print(f"[*] Чтение исходного файла {initial_file_path}...")
-    data = read_file(initial_file_path)
+        private_key = AsymmetricCipher.load_private_key(private_key_path)
+        if not private_key: return
 
-    print("[*] Добавление паддинга к данным...")
-    padded_data = pad_data(data)
-    print(f"[+] Данные дополнены паддингом. Исходный размер: {len(data)}, после паддинга: {len(padded_data)}.")
+        sym_key = AsymmetricCipher.decrypt_sym_key(private_key, encrypted_sym_key_data)
+        if not sym_key: return
 
-    print("[*] Генерация IV (Initial Vector) для CBC режима...")
-    iv = os.urandom(SM4_BLOCK_SIZE)  # IV должен быть случайным и иметь размер блока
-    print(f"[+] IV сгенерирован: {iv.hex()}")
+        # Шифрование файла симметричным ключом SM4 (CBC)
+        data = FileManager.read_file(initial_file_path)
+        if not data: return
 
-    print("[*] Инициализация шифра SM4 в режиме CBC...")
-    cipher = CryptSM4()
-    cipher.set_key(sym_key, SM4_ENCRYPT)
+        encrypted_data_with_iv = SymmetricCipher.encrypt(sym_key, data)
+        if not encrypted_data_with_iv: return  # encrypt печатает ошибку при необходимости
 
-    print("[*] Шифрование данных симметричным алгоритмом SM4...")
-    # Примечание: gmssl.sm4.CryptSM4.crypt_cbc шифрует данные целиком
-    # Для очень больших файлов этот подход может быть неоптимальным по памяти.
-    # Потоковое шифрование с gmssl требует более сложного управления IV.
-    ciphertext = cipher.crypt_cbc(iv, padded_data)
-    print("[+] Данные зашифрованы.")
+        # Сохранение зашифрованных данных (IV + шифротекст)
+        FileManager.save_file(encrypted_file_path, encrypted_data_with_iv)
 
-    # Сохраняем IV вместе с шифротекстом, IV всегда идет первыми 16 байтами
-    print(f"[*] Сохранение IV и зашифрованных данных в {encrypted_file_path}...")
-    save_file(encrypted_file_path, iv + ciphertext)
+        Utils.print_success("===== Шифрование завершено успешно! =====")
 
-    print("===== Шифрование завершено успешно! =====")
+    except Exception as e:
+        # Перехвачены ошибки из File/Crypto методов (которые уже вывели детальное сообщение)
+        Utils.print_error(f"Произошла ошибка в процессе шифрования: {e}")

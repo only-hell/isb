@@ -1,69 +1,59 @@
-# main.py
-
 import argparse
-import json
-import os  # Импорт os для проверки существования файла
+import os
+
 from key_gen import generate_keys
 from encrypt import hybrid_encrypt
 from decrypt import hybrid_decrypt
-import config  # Импорт config для дефолтных путей
-
-
-def load_settings(json_path=None):
-    """Загружает настройки из JSON файла, объединяя с дефолтными."""
-    print("[*] Загрузка настроек...")
-    # Начинаем с дефолтных настроек из config.py
-    settings = {
-        "initial_file": config.initial_file,
-        "encrypted_file": config.encrypted_file,
-        "decrypted_file": config.decrypted_file,
-        # Используем новое имя ключа для ясности, даже если в config старое
-        # Если в вашем settings.json осталось старое имя 'symmetric_key',
-        # нужно будет поправить это место или использовать .get() с запасным именем.
-        "encrypted_symmetric_key_file": getattr(config, 'encrypted_symmetric_key_file', config.symmetric_key),
-        "public_key": config.public_key,
-        "secret_key": config.secret_key
-    }
-
-    # Если указан путь к JSON файлу, пытаемся загрузить и обновить настройки
-    if json_path:
-        print(f"[*] Попытка загрузить настройки из JSON файла: {json_path}")
-        if not os.path.exists(json_path):
-            print(f"[!] Ошибка: JSON файл настроек не найден по пути {json_path}")
-            # Продолжаем с дефолтными настройками, но предупреждаем
-        else:
-            try:
-                with open(json_path, 'r', encoding='utf-8') as f:
-                    json_settings = json.load(f)
-                settings.update(json_settings)
-                print("[+] Настройки успешно обновлены из JSON файла.")
-            except json.JSONDecodeError:
-                print(f"[!] Ошибка: Неверный формат JSON файла {json_path}")
-                # Продолжаем с дефолтными настройками, но предупреждаем
-            except Exception as e:
-                print(f"[!] Неизвестная ошибка при загрузке JSON настроек: {e}")
-                # Продолжаем с дефолтными настройками, но предупреждаем
-
-    print("[+] Настройки загружены.")
-    # print("Используемые настройки:")
-    # for key, value in settings.items():
-    #     print(f"  {key}: {value}")
-    return settings
+from utils import Utils
+from file_manager import FileManager
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Гибридная криптосистема: генерация, шифрование, дешифрование")
-    group = parser.add_mutually_exclusive_group(required=True)  # required=True гарантирует выбор одного флага
-    group.add_argument('-gen', '--generation', nargs='?', const='settings.json',
-                       help='Запускает режим генерации ключей. Опционально принимает путь к JSON файлу настроек (по умолчанию settings.json).')
-    group.add_argument('-enc', '--encryption', nargs='?', const='settings.json',
-                       help='Запускает режим шифрования данных. Опционально принимает путь к JSON файлу настроек (по умолчанию settings.json).')
-    group.add_argument('-dec', '--decryption', nargs='?', const='settings.json',
-                       help='Запускает режим дешифрования данных. Опционально принимает путь к JSON файлу настроек (по умолчанию settings.json).')
+    """Главная точка входа в приложение."""
+    parser = argparse.ArgumentParser(description="Гибридная криптосистема: генерация ключей, шифрование, дешифрование.")
+
+    # Режимы работы: gen, enc, dec (взаимоисключающие, необязательны если используется ctf)
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument('-gen', '--generation', nargs='?', const='settings.json', help='Режим генерации ключей.')
+    group.add_argument('-enc', '--encryption', nargs='?', const='settings.json', help='Режим шифрования данных.')
+    group.add_argument('-dec', '--decryption', nargs='?', const='settings.json', help='Режим дешифрования данных.')
+
+    # Опция создания тестового файла
+    parser.add_argument('-ctf', '--create-test-file', type=str, nargs='+',
+                        help='Создает тестовый файл. Принимает путь и опционально размер в MB (по умолчанию 1).')
 
     args = parser.parse_args()
 
-    # Определяем путь к JSON файлу из аргументов
+    # Обработка создания тестового файла (-ctf)
+    if args.create_test_file:
+        file_path = args.create_test_file[0]
+        size_mb = 1  # Размер по умолчанию в MB
+
+        # Парсим опциональный размер, если предоставлен
+        if len(args.create_test_file) > 1:
+            try:
+                size_mb = int(args.create_test_file[1])
+                if size_mb <= 0:
+                    raise ValueError("Размер должен быть положительным числом.")
+            except ValueError:
+                Utils.print_error(
+                    f"Неверный формат или значение размера файла: {args.create_test_file[1]}. Размер должен быть положительным целым числом (в MB).")
+                return  # Выход при ошибке парсинга размера
+
+        # Пытаемся создать файл. FileManager сам выводит ошибки и выбрасывает исключения.
+        try:
+            FileManager.create_test_file(file_path, size_mb)
+        except Exception:
+            # Если FileManager выбросил исключение (после вывода своей ошибки), просто выходим.
+            pass
+
+        return  # Всегда выходим из main после попытки создания файла (-ctf)
+
+    # Если не был запрошен только create-test-file, то один из gen/enc/dec должен быть обязательным.
+    if not (args.generation or args.encryption or args.decryption):
+        parser.error("Выберите один из режимов: -gen, -enc, -dec или используйте -ctf.")
+
+    # Определяем путь к JSON файлу настроек
     json_path = None
     if args.generation is not None:
         json_path = args.generation
@@ -72,18 +62,19 @@ def main():
     elif args.decryption is not None:
         json_path = args.decryption
 
-    # Если флаг был указан без значения, nargs='?' установит его в const='settings.json'
-    # Если флаг был указан со значением, nargs='?' установит его в это значение
-    # Если флаг не был указан, соответствующее поле в args будет None
+    # Загружаем настройки и запускаем выбранный сценарий
+    try:
+        settings = Utils.load_settings(json_path)
 
-    settings = load_settings(json_path if isinstance(json_path, str) else None)
+        if args.generation is not None:
+            generate_keys(settings)
+        elif args.encryption is not None:
+            hybrid_encrypt(settings)
+        elif args.decryption is not None:
+            hybrid_decrypt(settings)
 
-    if args.generation is not None:
-        generate_keys(settings)
-    elif args.encryption is not None:
-        hybrid_encrypt(settings)
-    elif args.decryption is not None:
-        hybrid_decrypt(settings)
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":
