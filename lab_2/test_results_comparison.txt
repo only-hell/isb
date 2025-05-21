@@ -22,21 +22,25 @@ def frequency_test(bits):
 
 
 def runs_test(sequence):
+    # Тест на одинаковые подряд идущие биты (Runs test)
     n = len(sequence)
     ones = sequence.count('1')
     prop = ones / n
+
+    # Предусловие на долю единиц
     if abs(prop - 0.5) >= 2 / math.sqrt(n):
         return 0.0
-    runs = 1
-    for i in range(1, n):
-        if sequence[i] != sequence[i - 1]:
+
+    # Подсчет переходов (знакоперемен)
+    runs = 0
+    for i in range(0, n-1):
+        if sequence[i] != sequence[i + 1]:
             runs += 1
-    expected_runs = 2 * n * prop * (1 - prop) + 1
+
+    # Расчет P-value по стандартной формуле
+    numerator = abs(runs - 2 * n * prop * (1 - prop))
     denominator = 2 * math.sqrt(2 * n) * prop * (1 - prop)
-    if denominator == 0:
-        return 0.0
-    z_score_arg = abs(runs - expected_runs) / denominator
-    p_value = math.erfc(z_score_arg)
+    p_value = math.erfc(numerator / denominator)
     return p_value
 
 
