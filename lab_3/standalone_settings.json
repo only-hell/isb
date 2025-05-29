@@ -1,0 +1,8 @@
+{
+  "initial_file": "files/test_file.txt",
+  "encrypted_file": "files/test_file.encrypted",
+  "decrypted_file": "files/test_file.decrypted",
+  "encrypted_symmetric_key_file": "keys/my_sm4_key_encrypted_rsa.bin",  
+  "public_key": "keys/my_rsa_public.pem",
+  "secret_key": "keys/my_rsa_private.pem"   
+}
