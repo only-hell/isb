@@ -1,5 +1,4 @@
-from cryptography.hazmat.primitives.asymmetric import rsa, \
-    padding as rsa_padding  # Импортируем padding под псевдонимом rsa_padding
+from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding 
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 from file_manager import FileManager
@@ -15,7 +14,7 @@ class AsymmetricCipher:
         print(f"[*] Генерация пары RSA ключей (размер {config.RSA_KEY_SIZE} бит)...")
         try:
             private_key = rsa.generate_private_key(
-                public_exponent=65537,  # Рекомендованное публичное экспонента
+                public_exponent=65537,
                 key_size=config.RSA_KEY_SIZE
             )
             public_key = private_key.public_key()
@@ -25,7 +24,7 @@ class AsymmetricCipher:
             private_pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.NoEncryption()  # Не шифруем приватный ключ паролем
+                encryption_algorithm=serialization.NoEncryption() 
             )
             FileManager.save_file(settings['secret_key'], private_pem)
 
@@ -73,11 +72,11 @@ class AsymmetricCipher:
         """Шифрует симметричный ключ публичным RSA ключом (OAEP padding)."""
         print("[*] Шифрование симметричного ключа публичным RSA ключом (OAEP)...")
         try:
-            # Использование OAEP padding (рекомендовано для RSA шифрования данных)
+            # Использование OAEP padding
             encrypted_key = public_key.encrypt(
                 symmetric_key,
                 rsa_padding.OAEP(
-                    mgf=rsa_padding.MGF1(algorithm=hashes.SHA256()),  # <-- ИСПРАВЛЕНО: padding.MGF1 -> rsa_padding.MGF1
+                    mgf=rsa_padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
                     label=None
                 )
@@ -93,11 +92,11 @@ class AsymmetricCipher:
         """Расшифровывает симметричный ключ приватным RSA ключом (OAEP padding)."""
         print("[*] Расшифровка зашифрованного симметричного ключа приватным RSA ключом (OAEP)...")
         try:
-            # Использование OAEP padding (должен соответствовать используемому при шифровании)
+            # Использование OAEP padding
             symmetric_key = private_key.decrypt(
                 encrypted_ciphertext,
                 rsa_padding.OAEP(
-                    mgf=rsa_padding.MGF1(algorithm=hashes.SHA256()),  # <-- ИСПРАВЛЕНО: padding.MGF1 -> rsa_padding.MGF1
+                    mgf=rsa_padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
                     label=None
                 )
