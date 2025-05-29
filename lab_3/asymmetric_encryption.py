@@ -1,5 +1,3 @@
-# asymmetric_encryption.py
-
 from cryptography.hazmat.primitives.asymmetric import rsa, \
     padding as rsa_padding  # Импортируем padding под псевдонимом rsa_padding
 from cryptography.hazmat.primitives import serialization, hashes
