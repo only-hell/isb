@@ -1,4 +1,4 @@
-from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding 
+from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 from file_manager import FileManager
@@ -6,12 +6,12 @@ import config
 
 
 class AsymmetricCipher:
-    """Класс для операций асимметричного шифрования RSA (OAEP)."""
+    """Класс для операций асимметричного шифрования RSA (OAEP) и генерации ключей."""
 
     @staticmethod
     def generate_keys(settings: dict) -> tuple[RSAPrivateKey, RSAPublicKey]:
-        """Генерирует пару RSA ключей (размер из config) и сохраняет их в PEM файлы."""
-        print(f"[*] Генерация пары RSA ключей (размер {config.RSA_KEY_SIZE} бит)...")
+        """Генерирует пару RSA ключей (размер из config) и сохраняет их в PEM файлы, используя пути из settings."""
+        print(f"[*] Генерация пары RSA ключей (размер {config.RSA_KEY_SIZE} бит) из настроек...")
         try:
             private_key = rsa.generate_private_key(
                 public_exponent=65537,
@@ -20,23 +20,53 @@ class AsymmetricCipher:
             public_key = private_key.public_key()
             print("[+] Пара RSA ключей сгенерирована.")
 
-            # Сериализация и сохранение приватного ключа в формате PEM
             private_pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.NoEncryption() 
+                encryption_algorithm=serialization.NoEncryption()
             )
             FileManager.save_file(settings['secret_key'], private_pem)
 
-            # Сериализация и сохранение публичного ключа в формате PEM
             public_pem = public_key.public_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
             FileManager.save_file(settings['public_key'], public_pem)
 
-            print("[+] Пара RSA ключей сериализована и сохранена.")
+            print("[+] Пара RSA ключей сериализована и сохранена по путям из настроек.")
             return private_key, public_key
+        except Exception as e:
+            print(f"[!] Ошибка при генерации или сохранении RSA ключей: {e}")
+            raise
+
+    @staticmethod
+    def generate_and_save_rsa_keys(public_key_path: str, private_key_path: str):
+        """Генерирует пару RSA ключей и сохраняет их в PEM файлы по указанным путям."""
+        print(f"[*] Генерация пары RSA ключей (размер {config.RSA_KEY_SIZE} бит) по указанным путям...")
+        try:
+            private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=config.RSA_KEY_SIZE
+            )
+            public_key = private_key.public_key()
+            print("[+] Пара RSA ключей сгенерирована.")
+
+            private_pem = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+            FileManager.save_file(private_key_path, private_pem)
+
+            public_pem = public_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+            FileManager.save_file(public_key_path, public_pem)
+
+            print(f"[+] Публичный ключ сохранен в {public_key_path}.")
+            print(f"[+] Приватный ключ сохранен в {private_key_path}.")
+            print("[+] Пара RSA ключей сериализована и сохранена по указанным путям.")
         except Exception as e:
             print(f"[!] Ошибка при генерации или сохранении RSA ключей: {e}")
             raise
